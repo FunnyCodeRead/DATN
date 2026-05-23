@@ -1,0 +1,554 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+title Kid Manager - Firebase Auth + Location Class Diagram
+
+package "External" {
+  class "FirebaseAuth\n(external identity)" as FirebaseAuth <<External>> {
+    +uid: string
+    +email: string?
+  }
+}
+
+package "Firestore / Auth & Account" {
+  enum UserRole {
+    parent
+    child
+    guardian
+  }
+
+  enum SubscriptionPlan {
+    free
+    pro
+  }
+
+  enum SubscriptionStatus {
+    trial
+    active
+    expired
+    canceled
+    payment_failed
+  }
+
+  class "users/{uid}\nUser" as User <<Firestore>> {
+    +uid: string
+    +role: UserRole
+    +email: string?
+    +displayName: string?
+    +phone: string?
+    +gender: string?
+    +address: string?
+    +dob: Timestamp?
+    +dobIso: string?
+    +birthMonth: int?
+    +birthDay: int?
+    +birthYear: int?
+    +avatarUrl: string?
+    +coverUrl: string?
+    +locale: string?
+    +timezone: string?
+    +familyId: string?
+    +parentUid: string?
+    +isActive: bool
+    +allowTracking: bool
+    +managedChildIds: string[*]
+    +createdAt: Timestamp?
+    +lastActiveAt: Timestamp?
+  }
+
+  class "subscription\nSubscriptionInfo" as SubscriptionInfo <<Embedded>> {
+    +plan: SubscriptionPlan
+    +status: SubscriptionStatus
+    +startAt: Timestamp?
+    +endAt: Timestamp?
+    +isTrial: bool
+    +autoRenew: bool
+    +productId: string?
+    +platform: string?
+    +updatedAt: Timestamp?
+  }
+
+  class "families/{familyId}\nFamily" as Family <<Firestore>> {
+    +createdBy: string
+    +createdAt: Timestamp
+    +lastMessageAt: Timestamp?
+    +lastMessageBy: string?
+    +lastMessageText: string?
+  }
+
+  class "families/{familyId}/members/{uid}\nFamilyMemberPublic" as FamilyMemberPublic <<Firestore>> {
+    +uid: string
+    +role: UserRole
+    +familyId: string
+    +displayName: string?
+    +avatarUrl: string
+    +isActive: bool
+    +lastActiveAt: Timestamp?
+    +birthMonth: int?
+    +birthDay: int?
+    +birthYear: int?
+    +joinedAt: Timestamp?
+    +updatedAt: Timestamp
+  }
+
+  class "families/{familyId}/locationMembers/{uid}\nFamilyLocationMember" as FamilyLocationMember <<Firestore>> {
+    +uid: string
+    +role: UserRole
+    +familyId: string
+    +displayName: string?
+    +avatarUrl: string
+    +parentUid: string?
+    +isActive: bool
+    +allowTracking: bool
+    +lastActiveAt: Timestamp?
+    +updatedAt: Timestamp
+  }
+
+  class "families/{familyId}/managementMembers/{uid}\nFamilyManagementMember" as FamilyManagementMember <<Firestore>> {
+    +uid: string
+    +role: UserRole
+    +familyId: string
+    +parentUid: string
+    +displayName: string?
+    +avatarUrl: string
+    +managedChildIds: string[*]
+    +updatedAt: Timestamp
+  }
+
+  enum Platform {
+    android
+    ios
+  }
+
+  class "fcmInstallations/{installationId}\nFcmInstallation" as FcmInstallation <<Firestore>> {
+    +installationId: string
+    +token: string
+    +uid: string
+    +familyId: string?
+    +platform: Platform
+    +updatedAt: Timestamp
+    +lastSeenAt: Timestamp
+  }
+
+  enum OtpType {
+    verify_email
+    reset_password
+  }
+
+  class "email_otps/{otpId}\nEmailOtp" as EmailOtp <<Firestore>> {
+    +id: string
+    +type: OtpType
+    +uid: string?
+    +email: string
+    +emailHash: string
+    +otpHash: string
+    +otpSalt: string
+    +attempts: int
+    +maxAttempts: int
+    +lockedUntil: Timestamp?
+    +expiresAt: Timestamp
+    +createdAt: Timestamp
+    +updatedAt: Timestamp
+  }
+
+  note right of EmailOtp
+    wire values:
+    verify-email
+    reset-password
+  end note
+
+  enum MailQueueType {
+    verify_email
+    reset_password
+  }
+
+  enum MailQueueStatus {
+    pending
+    processing
+    sent
+    error
+  }
+
+  class "mail_queue/{mailId}\nMailQueueJob" as MailQueueJob <<Firestore>> {
+    +to: string
+    +type: MailQueueType
+    +code: string
+    +uid: string?
+    +createdAt: Timestamp
+    +status: MailQueueStatus
+    +processingStartedAt: Timestamp?
+    +updatedAt: Timestamp?
+    +sentAt: Timestamp?
+    +provider: string?
+    +providerMessageId: string?
+    +lastError: string?
+    +error: string?
+  }
+
+  class "auth_rate_limits/{rateId}\nAuthRateLimit" as AuthRateLimit <<Firestore>> {
+    +scope: string
+    +key: string
+    +count: int
+    +createdAt: Timestamp
+    +updatedAt: Timestamp
+    +expiresAt: Timestamp
+  }
+
+  class "reset_sessions/{sessionId}\nResetSession" as ResetSession <<Firestore>> {
+    +uid: string
+    +emailHash: string
+    +expiresAt: Timestamp
+    +used: bool
+    +createdAt: Timestamp
+    +usedAt: Timestamp?
+  }
+
+  class "notifications/{notificationId}\nNotification" as Notification <<Firestore>> {
+    +senderId: string
+    +receiverId: string
+    +type: string
+    +title: string
+    +body: string
+    +eventKey: string?
+    +familyId: string?
+    +eventCategory: string?
+    +expiresAt: Timestamp?
+    +data: map
+    +isRead: bool
+    +status: string
+    +createdAt: Timestamp
+  }
+}
+
+package "Firestore / SOS & Safe Route" {
+  enum SosStatus {
+    active
+    resolved
+  }
+
+  class "location\nSosLocation" as SosLocation <<Embedded>> {
+    +lat: double
+    +lng: double
+    +acc: double?
+  }
+
+  class "reminder\nSosReminder" as SosReminder <<Embedded>> {
+    +initialPushSent: bool
+    +lastAttempt: int
+    +lastSentAt: Timestamp?
+    +lastSuccess: int?
+    +nextAttempt: int?
+    +scheduleState: string
+    +stoppedAt: Timestamp?
+    +workerLeaseAttempt: int?
+    +workerLeaseTaskName: string?
+    +workerLeaseAt: Timestamp?
+    +updatedAt: Timestamp?
+    +lastError: string?
+    +lastErrorAt: Timestamp?
+    +lastTaskName: string?
+  }
+
+  class "fanout\nSosFanout" as SosFanout <<Embedded>> {
+    +sentAt: Timestamp?
+    +attempted: int?
+    +attemptedRecipients: int?
+    +success: int?
+    +invalidTokensRemoved: int?
+    +claimedAt: Timestamp?
+    +claimId: string?
+    +lastError: string?
+    +lastErrorAt: Timestamp?
+  }
+
+  class "families/{familyId}/sos/{sosId}\nSos" as Sos <<Firestore>> {
+    +createdBy: string
+    +createdByRole: UserRole
+    +createdByName: string
+    +createdAt: Timestamp
+    +status: SosStatus
+    +dayKey: string
+    +resolvedBy: string?
+    +resolvedAt: Timestamp?
+  }
+
+  enum SafeRouteTravelMode {
+    walking
+    motorbike
+    pickup
+    otherVehicle
+  }
+
+  enum ZoneRiskLevel {
+    low
+    medium
+    high
+  }
+
+  class "RoutePoint" as RoutePoint <<Embedded>> {
+    +latitude: double
+    +longitude: double
+    +sequence: int
+  }
+
+  class "RouteHazard" as RouteHazard <<Embedded>> {
+    +id: string
+    +name: string
+    +latitude: double
+    +longitude: double
+    +radiusMeters: double
+    +riskLevel: ZoneRiskLevel
+    +sourceZoneId: string
+  }
+
+  class "routes/{routeId}\nSafeRoute" as SafeRoute <<Firestore>> {
+    +id: string
+    +childId: string
+    +parentId: string?
+    +name: string
+    +corridorWidthMeters: double
+    +distanceMeters: double
+    +durationSeconds: double
+    +travelMode: SafeRouteTravelMode
+    +profile: string?
+    +createdAt: epoch_ms
+    +updatedAt: epoch_ms
+  }
+
+  enum TripStatus {
+    planned
+    active
+    temporarilyDeviated
+    deviated
+    completed
+    cancelled
+  }
+
+  class "lastLocation\nTripLiveLocation" as TripLiveLocation <<Embedded>> {
+    +latitude: double
+    +longitude: double
+    +accuracy: double
+    +speed: double
+    +heading: double
+    +batteryLevel: double?
+    +isMock: bool
+    +timestamp: epoch_ms
+    +motion: string?
+    +transport: string?
+  }
+
+  class "trips/{tripId}\nTrip" as Trip <<Firestore>> {
+    +id: string
+    +childId: string
+    +parentId: string
+    +routeId: string
+    +alternativeRouteIds: string[*]
+    +currentRouteId: string?
+    +routeName: string?
+    +status: TripStatus
+    +reason: string?
+    +consecutiveDeviationCount: int
+    +currentDistanceFromRouteMeters: double
+    +startedAt: epoch_ms
+    +updatedAt: epoch_ms
+    +scheduledStartAt: epoch_ms?
+    +repeatWeekdays: int[*]
+    +lastScheduledActivationAt: epoch_ms?
+    +lastDeviationAlertAt: epoch_ms?
+    +lastDangerAlertAt: epoch_ms?
+    +lastDangerHazardId: string?
+    +lastBackOnRouteAlertAt: epoch_ms?
+    +lastReturnedToStartAlertAt: epoch_ms?
+    +lastStationaryAlertAt: epoch_ms?
+    +hasLeftStartArea: bool?
+    +isNearStartArea: bool?
+    +stationaryAnchorLatitude: double?
+    +stationaryAnchorLongitude: double?
+    +stationarySinceAt: epoch_ms?
+    +hasStationaryAlertActive: bool?
+  }
+
+  class "safe_route_current_trips/{childUid}\nSafeRouteCurrentTripSnapshot" as CurrentTripSnapshot <<Firestore>> {
+    +childId: string
+    +adultCurrentTripVisibleUntil: epoch_ms?
+    +updatedAt: epoch_ms
+  }
+}
+
+package "RTDB / Location & Zone" {
+  enum ZoneType {
+    safe
+    danger
+  }
+
+  enum ZoneAction {
+    enter
+    exit
+  }
+
+  class "locations/{childUid}/meta\nLocationMeta" as LocationMeta <<RTDB>> {
+    +parentUid: string
+    +familyId: string
+    +historyTimeZone: string
+    +historyPartitionVersion: int
+    +historyPartitionCutoverAt: epoch_ms
+    +updatedAt: epoch_ms
+  }
+
+  class "locations/{childUid}/current\nCurrentLocation" as CurrentLocation <<RTDB>> {
+    +deviceId: string
+    +accuracy: double
+    +latitude: double
+    +longitude: double
+    +speed: double
+    +heading: double
+    +isMock: bool
+    +timestamp: epoch_ms
+    +motion: string?
+    +transport: string?
+    +familyId: string
+    +updatedAt: epoch_ms
+  }
+
+  class "locations/{childUid}/historyByDay/{dayKey}/{timestamp}\nLocationHistoryPoint" as LocationHistoryPoint <<RTDB>> {
+    +deviceId: string
+    +accuracy: double
+    +latitude: double
+    +longitude: double
+    +speed: double
+    +heading: double
+    +isMock: bool
+    +timestamp: epoch_ms
+    +motion: string?
+    +transport: string?
+    +sentAt: epoch_ms
+  }
+
+  class "live_locations/{childUid}\nLiveLocation" as LiveLocation <<RTDB>> {
+    +latitude: double
+    +longitude: double
+    +accuracy: double
+    +speed: double
+    +heading: double
+    +batteryLevel: double?
+    +isMock: bool
+    +timestamp: epoch_ms
+    +source: string
+    +trustState: string
+    +trustEvaluatedAt: epoch_ms
+    +trustedHeartbeatAt: epoch_ms?
+    +trustedRawTimestamp: epoch_ms?
+  }
+
+  class "zonesByChild/{childUid}/{zoneId}\nZone" as Zone <<RTDB>> {
+    +name: string
+    +type: ZoneType
+    +lat: double
+    +lng: double
+    +radiusM: double
+    +enabled: bool
+    +createdBy: string
+    +createdAt: epoch_ms
+    +updatedAt: epoch_ms
+  }
+
+  class "zonePresenceByChild/{childUid}/{zoneId}\nZonePresence" as ZonePresence <<RTDB>> {
+    +inside: bool
+    +zoneType: ZoneType
+    +zoneName: string
+    +enterAt: epoch_ms
+    +updatedAt: epoch_ms
+    +source: string
+  }
+
+  class "zoneEventsByChild/{childUid}/{eventId}\nZoneEvent" as ZoneEvent <<RTDB>> {
+    +canonical: bool
+    +source: string
+    +childUid: string
+    +zoneId: string
+    +zoneType: ZoneType
+    +action: ZoneAction
+    +zoneName: string
+    +timestamp: epoch_ms
+    +lat: double
+    +lng: double
+    +enterAt: epoch_ms
+    +durationSec: int
+    +durationMin: int
+    +createdAt: epoch_ms
+  }
+}
+
+User *-- SubscriptionInfo
+FirebaseAuth ..> User : provision profile
+
+Family "1" o-- "0..*" FamilyMemberPublic
+Family "1" o-- "0..*" FamilyLocationMember
+Family "1" o-- "0..*" FamilyManagementMember
+
+User "1" ..> "0..1" Family : familyId
+User "1" ..> "0..1" User : parentUid
+FamilyMemberPublic ..> User : mirror of
+FamilyLocationMember ..> User : mirror of
+FamilyManagementMember ..> User : mirror of
+
+User "1" -- "0..*" FcmInstallation : installs
+User "1" -- "0..*" EmailOtp : otp owner
+User "1" -- "0..*" ResetSession : reset owner
+User "1" -- "0..*" Notification : receiver
+User "1" -- "0..*" Notification : sender
+MailQueueJob ..> EmailOtp : sends code for
+
+Family "1" o-- "0..*" Sos
+Sos *-- SosLocation
+Sos *-- SosReminder
+Sos *-- SosFanout
+Sos ..> User : createdBy
+Sos ..> User : resolvedBy
+
+SafeRoute *-- "2..*" RoutePoint
+SafeRoute *-- "0..*" RouteHazard
+SafeRoute ..> User : childId
+SafeRoute ..> User : parentId
+
+Trip *-- "0..1" TripLiveLocation
+Trip ..> SafeRoute : routeId
+Trip ..> SafeRoute : currentRouteId
+Trip ..> User : childId
+Trip ..> User : parentId
+
+CurrentTripSnapshot *-- "0..1" Trip : adultCurrentTrip
+CurrentTripSnapshot *-- "0..1" Trip : adultRecentCompletedTrip
+CurrentTripSnapshot *-- "0..1" Trip : childMonitorTrip
+CurrentTripSnapshot ..> User : childId
+
+LocationMeta ..> User : childUid
+CurrentLocation ..> User : childUid
+LocationHistoryPoint ..> User : childUid
+LiveLocation ..> User : childUid
+Zone ..> User : childUid
+Zone ..> User : createdBy
+ZonePresence ..> Zone : zoneId
+ZoneEvent ..> Zone : zoneId
+ZoneEvent ..> User : childUid
+
+note bottom of SafeRoute
+  Firestore doc, but time fields are stored as epoch_ms numbers
+  in the current codebase.
+end note
+
+note bottom of CurrentLocation
+  current and history are raw RTDB location streams.
+  live_locations is the trusted server-side mirror.
+end note
+
+note bottom of Notification
+  Global notifications/{notificationId} is in scope.
+  users/{uid}/notifications and chatNotifications stay out of scope here.
+end note
+
+@enduml

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:kid_manager/features/ai_insights/presentation/ai_insights_screen.dart';
+import 'package:kid_manager/features/ai_insights/services/ai_insights_strings.dart';
 import 'package:kid_manager/features/map_engine/map_engine.dart';
 import 'package:kid_manager/features/map_engine/smooth/smooth_mover.dart';
 import 'package:kid_manager/features/safe_route/domain/entities/route_point.dart';
@@ -9,6 +11,7 @@ import 'package:kid_manager/features/safe_route/presentation/pages/tracking_page
 import 'package:kid_manager/l10n/app_localizations.dart';
 import 'package:kid_manager/models/app_user.dart';
 import 'package:kid_manager/models/location/location_data.dart';
+import 'package:kid_manager/models/user/app_user_extensions.dart';
 import 'package:kid_manager/services/access_control/access_control_service.dart';
 import 'package:kid_manager/viewmodels/location/child_detail_map_vm.dart';
 import 'package:kid_manager/viewmodels/location/parent_location_vm.dart';
@@ -398,6 +401,30 @@ class _ChildDetailMapBodyState extends State<_ChildDetailMapBody>
     return viewer?.isAdultManager == true && target?.isChild == true;
   }
 
+  bool _canOpenAiInsights() {
+    final viewer = context.read<UserVm>().me;
+    final target = _resolveTrackedMember();
+    return viewer?.isAdultManager == true && target?.isChild == true;
+  }
+
+  Future<void> _openAiInsights() async {
+    final target = _resolveTrackedMember();
+    if (target == null || !target.isChild) {
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AiInsightsScreen(
+          childId: widget.childId,
+          childDisplayName: target.displayLabel,
+          childAvatarUrl: widget.childAvatarUrl,
+        ),
+      ),
+    );
+  }
+
   Widget _buildAvatarBadge() {
     final scheme = Theme.of(context).colorScheme;
     final avatarUrl = widget.childAvatarUrl?.trim() ?? '';
@@ -560,6 +587,8 @@ class _ChildDetailMapBodyState extends State<_ChildDetailMapBody>
 
   Widget _buildFabColumn(ChildDetailMapVm vm) {
     final l10n = AppLocalizations.of(context);
+    final insightsStrings = AiInsightsStrings(Localizations.localeOf(context));
+    final canOpenAiInsights = _canOpenAiInsights();
     final canOpenSafeRoute = _canOpenSafeRoute();
     final canManageZones = _canManageZones();
     final startPointSource = vm.selectedPoint ?? vm.latest;
@@ -595,7 +624,17 @@ class _ChildDetailMapBodyState extends State<_ChildDetailMapBody>
             ),
           ),
         ],
+        if (canOpenAiInsights) ...[
+          const SizedBox(height: 10),
+          ChildDetailMapFab(
+            tooltip: insightsStrings.openInsightsTooltip,
+            icon: Icons.auto_awesome_rounded,
+            active: false,
+            onTap: _openAiInsights,
+          ),
+        ],
         if (canOpenSafeRoute) ...[
+          const SizedBox(height: 10),
           ChildDetailMapFab(
             tooltip: l10n.childLocationTooltipSafeRoute,
             icon: Icons.route_rounded,
@@ -611,8 +650,8 @@ class _ChildDetailMapBodyState extends State<_ChildDetailMapBody>
               ),
             ),
           ),
-          const SizedBox(height: 10),
         ],
+        const SizedBox(height: 10),
         ChildDetailMapFab(
           tooltip: l10n.childLocationTooltipChooseMap,
           icon: Icons.layers_outlined,

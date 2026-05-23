@@ -1,9 +1,10 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kid_manager/core/location/map_focus_bus.dart';
 import 'package:kid_manager/core/sos/sos_focus_bus.dart';
+import 'package:kid_manager/features/ai_insights/presentation/ai_insights_screen.dart';
 import 'package:kid_manager/l10n/app_localizations.dart';
 import 'package:kid_manager/models/app_user.dart';
 import 'package:kid_manager/repositories/chat/family_chat_repository.dart';
@@ -20,6 +21,7 @@ import 'package:provider/provider.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mbx;
 
 import 'package:kid_manager/features/presentation/shared/state/mapbox_controller.dart';
+import 'package:kid_manager/models/user/app_user_extensions.dart';
 import 'package:kid_manager/viewmodels/location/parent_location_vm.dart';
 import 'package:kid_manager/viewmodels/user_vm.dart';
 import 'package:kid_manager/widgets/location/child_info_sheet.dart';
@@ -366,6 +368,21 @@ class _ParentAllChildrenMapScreenState extends State<ParentAllChildrenMapScreen>
             MaterialPageRoute(builder: (_) => const FamilyGroupChatScreen()),
           );
         },
+        onOpenAiInsights: child.isChild
+            ? () {
+                Navigator.of(sheetContext).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AiInsightsScreen(
+                      childId: child.uid,
+                      childDisplayName: child.displayLabel,
+                      childAvatarUrl: child.avatarUrl,
+                    ),
+                  ),
+                );
+              }
+            : null,
         onSendQuickMessage: (msg) async {
           final me = _userVm.me;
           final familyId = _userVm.familyId;

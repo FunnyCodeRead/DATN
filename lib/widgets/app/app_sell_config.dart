@@ -1,5 +1,6 @@
 import 'package:kid_manager/features/presentation/shared/app_bottom_bar_config.dart';
 import 'package:kid_manager/features/presentation/shared/state/mapbox_controller.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/models/notifications/notification_source.dart';
 import 'package:kid_manager/repositories/chat/family_chat_repository.dart';
 import 'package:kid_manager/viewmodels/auth_vm.dart';
@@ -25,19 +26,21 @@ class AppShellConfig {
 
   static AppShellConfig guardian() => AppShellConfig([
     _managerMapTab(),
-    BottomTabConfig(
-      iconAsset: 'assets/icons/dashboard.svg',
-      root: const AppManagementScreen(),
-    ),
+    if (DemoFeatureFlags.appUsageEnabled)
+      BottomTabConfig(
+        iconAsset: 'assets/icons/dashboard.svg',
+        root: const AppManagementScreen(),
+      ),
     _familyChatTab(),
     _notificationTab(),
-    BottomTabConfig(
-      iconAsset: 'assets/icons/calendar.svg',
-      root: const ScheduleScreen(),
-      isScheduleTab: true,
-    ),
+    if (DemoFeatureFlags.scheduleEnabled)
+      BottomTabConfig(
+        iconAsset: 'assets/icons/calendar.svg',
+        root: const ScheduleScreen(),
+        isScheduleTab: true,
+      ),
     _profileTab(),
-  ], chatTabIndex: 2);
+  ], chatTabIndex: DemoFeatureFlags.appUsageEnabled ? 2 : 1);
 
   static AppShellConfig child() => AppShellConfig([
     BottomTabConfig(
@@ -50,29 +53,32 @@ class AppShellConfig {
     ),
     _familyChatTab(),
     _notificationTab(),
-    BottomTabConfig(
-      iconAsset: 'assets/icons/calendar.svg',
-      root: const ChildScheduleScreen(),
-      isScheduleTab: true,
-    ),
+    if (DemoFeatureFlags.scheduleEnabled)
+      BottomTabConfig(
+        iconAsset: 'assets/icons/calendar.svg',
+        root: const ChildScheduleScreen(),
+        isScheduleTab: true,
+      ),
     _profileTab(),
   ], chatTabIndex: 1);
 
   static AppShellConfig _adultManager() => AppShellConfig([
     _managerMapTab(),
-    BottomTabConfig(
-      iconAsset: 'assets/icons/dashboard.svg',
-      root: const AppManagementScreen(),
-    ),
+    if (DemoFeatureFlags.appUsageEnabled)
+      BottomTabConfig(
+        iconAsset: 'assets/icons/dashboard.svg',
+        root: const AppManagementScreen(),
+      ),
     _familyChatTab(),
     _notificationTab(),
-    BottomTabConfig(
-      iconAsset: 'assets/icons/calendar.svg',
-      root: const ScheduleScreen(),
-      isScheduleTab: true,
-    ),
+    if (DemoFeatureFlags.scheduleEnabled)
+      BottomTabConfig(
+        iconAsset: 'assets/icons/calendar.svg',
+        root: const ScheduleScreen(),
+        isScheduleTab: true,
+      ),
     _profileTab(),
-  ], chatTabIndex: 2);
+  ], chatTabIndex: DemoFeatureFlags.appUsageEnabled ? 2 : 1);
 
   static BottomTabConfig _managerMapTab() => BottomTabConfig(
     iconAsset: 'assets/icons/location.svg',

@@ -5,8 +5,9 @@ import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kid_manager/background/native_watcher_service.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:usage_stats/usage_stats.dart';
+// usage_stats package removed; usage access check is handled with a fallback in hasUsagePermission
 
 class PermissionService {
   Future<bool> hasNotificationPermission() async {
@@ -129,9 +130,12 @@ class PermissionService {
     if (!Platform.isAndroid) return true;
 
     try {
-      final granted = await UsageStats.checkUsagePermission();
-      debugPrint('checkUsagePermission=$granted');
-      return granted ?? false;
+      // usage_stats package removed; cannot programmatically check usage access here.
+      // Return false on Android to indicate the permission should be requested via settings UI.
+      debugPrint(
+        'Usage permission check not available without usage_stats package',
+      );
+      return false;
     } catch (e) {
       debugPrint('Usage permission error: $e');
       return false;
@@ -173,23 +177,30 @@ class PermissionService {
     }
   }
 
-  Future<Map<String, bool>> checkAllPermissions() async {
+  Future<Map<String, bool>> checkAllPermissions({
+    bool includeUsage = DemoFeatureFlags.appUsageEnabled,
+  }) async {
     final location = await hasForegroundLocationPermission();
     final notifications = await hasNotificationPermission();
     final backgroundLocation = await hasBackgroundLocationPermission();
     final media = await hasPhotosOrStoragePermission();
-    final usage = await hasUsagePermission();
     final accessibility = await hasAccessibilityPermission();
     final battery = await hasBatteryOptimizationDisabled();
+    final usage = includeUsage ? await hasUsagePermission() : null;
 
-    return {
+    final results = <String, bool>{
       'notifications': notifications,
       'location': location,
       'backgroundLocation': backgroundLocation,
       'media': media,
-      'usage': usage,
       'accessibility': accessibility,
       'batteryOptimizationDisabled': battery,
     };
+
+    if (usage != null) {
+      results['usage'] = usage;
+    }
+
+    return results;
   }
 }

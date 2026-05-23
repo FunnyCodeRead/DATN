@@ -102,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Load profile
       final profile = await userVM.loadProfile(uid: uid, caller: 'LoginScreen');
+      if (!mounted) return;
       if (profile == null) {
         await _showError(l10n.authUserProfileLoadFailed);
         return;
@@ -158,24 +159,22 @@ class _LoginScreenState extends State<LoginScreen> {
         AuthRuntimeManager.start(parentId: parentId, displayName: profile.name);
 
         await appVM.loadAndSeedApp();
+        if (!mounted) return;
       } else {
         unawaited(AuthRuntimeManager.stop());
       }
 
-      FocusScope.of(context).unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
     } catch (e, st) {
       debugPrint('Login error: $e');
       debugPrintStack(stackTrace: st);
 
-      await _handleLoginError(context, e, mounted);
+      if (!mounted) return;
+      await _handleLoginError(e);
     }
   }
 
-  Future<void> _handleLoginError(
-    BuildContext context,
-    Object e,
-    bool mounted,
-  ) async {
+  Future<void> _handleLoginError(Object e) async {
     if (!mounted) return;
 
     final l10n = AppLocalizations.of(context);
@@ -199,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
           if (!mounted) return;
 
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) =>
@@ -222,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<PendingOtp?> _getPendingOtp(StorageService storage) async {
-    final raw = await storage.getString(StorageKeys.pendingOtp);
+    final raw = storage.getString(StorageKeys.pendingOtp);
     if (raw == null) return null;
 
     try {
@@ -253,6 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _showError(String message) async {
+    if (!mounted) return;
     final l10n = runtimeL10n();
     await NotificationDialog.show(
       context,

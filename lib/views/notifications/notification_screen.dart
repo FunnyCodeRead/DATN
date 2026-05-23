@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kid_manager/core/app_navigator.dart';
 import 'package:kid_manager/core/app_route_observer.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/l10n/app_localizations.dart';
 import 'package:kid_manager/models/notifications/app_notification.dart';
 import 'package:kid_manager/models/notifications/notification_source.dart';
@@ -64,6 +65,9 @@ class _NotificationScreenState extends State<NotificationScreen>
     final item = NotificationNavigationState.consume();
 
     if (item == null) return;
+    if (!DemoFeatureFlags.isNotificationVisible(item.notificationType)) {
+      return;
+    }
 
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => NotificationDetailScreen(item: item)),
@@ -138,6 +142,9 @@ class _NotificationScreenState extends State<NotificationScreen>
   ) {
     return items.where((n) {
       if (n.type == 'family_chat') return false;
+      if (!DemoFeatureFlags.isNotificationVisible(n.notificationType)) {
+        return false;
+      }
 
       if (widget.systemOnly) {
         return n.senderId == 'system' || n.type == 'system';

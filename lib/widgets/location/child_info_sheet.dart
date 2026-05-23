@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:kid_manager/l10n/app_localizations.dart';
+import 'package:kid_manager/features/ai_insights/services/ai_insights_strings.dart';
 import 'package:kid_manager/models/app_user.dart';
 import 'package:kid_manager/models/location/location_data.dart';
 import 'package:kid_manager/models/schedule.dart';
@@ -15,6 +16,7 @@ class ChildInfoSheet extends StatefulWidget {
   final bool isSearching;
   final List<Schedule> daySchedules;
   final VoidCallback onOpenChat;
+  final VoidCallback? onOpenAiInsights;
   final Future<void> Function(String message) onSendQuickMessage;
   final VoidCallback onToggleSearch;
 
@@ -25,6 +27,7 @@ class ChildInfoSheet extends StatefulWidget {
     required this.isSearching,
     required this.daySchedules,
     required this.onOpenChat,
+    this.onOpenAiInsights,
     required this.onSendQuickMessage,
     required this.onToggleSearch,
   });
@@ -128,6 +131,7 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
     final panelMutedColor = locationPanelMutedColor(scheme);
     final panelBorderColor = locationPanelBorderColor(scheme);
     final panelHighlightColor = locationPanelHighlightColor(scheme);
+    final insightsStrings = AiInsightsStrings(Localizations.localeOf(context));
 
     final name = (member.displayName?.isNotEmpty ?? false)
         ? member.displayName!
@@ -668,6 +672,16 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
                                       : l10n.locationSearchHint,
                                   onTap: widget.onToggleSearch,
                                 ),
+                                if (widget.onOpenAiInsights != null) ...[
+                                  const SizedBox(height: 10),
+                                  _RightPill(
+                                    icon: const Icon(
+                                      Icons.auto_awesome_rounded,
+                                    ),
+                                    label: insightsStrings.openInsightsTooltip,
+                                    onTap: widget.onOpenAiInsights!,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/features/permissions/accessibility_permission_screen.dart';
 import 'package:kid_manager/features/permissions/background_location_guide_video_card.dart';
 import 'package:kid_manager/features/permissions/background_location_permission_screen.dart';
@@ -95,8 +96,10 @@ class _PermissionOnboardingFlowState extends State<PermissionOnboardingFlow>
     ];
 
     if (Platform.isAndroid) {
+      if (DemoFeatureFlags.appUsageEnabled) {
+        steps.add(PermissionOnboardingStepType.usage);
+      }
       steps.addAll(const [
-        PermissionOnboardingStepType.usage,
         PermissionOnboardingStepType.battery,
         PermissionOnboardingStepType.accessibility,
       ]);

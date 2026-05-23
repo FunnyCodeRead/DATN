@@ -4374,7 +4374,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionOnboardingAccessibilitySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Needed for some protection features on Android.'**
+  /// **'Used for parental control on Android to detect which app is open on the child\'s device and apply parent-defined blocking rules. This information is shown to the parent or assigned guardian for child safety and digital wellbeing.'**
   String get permissionOnboardingAccessibilitySubtitle;
 
   /// No description provided for @permissionOnboardingAccessibilityPrimaryButton.
@@ -4398,7 +4398,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionOnboardingBackgroundLocationSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'So location can still update when the app runs in the background.'**
+  /// **'This app collects location data to show live child location, trigger Safe Zone alerts, and support Safe Route even when the app is closed or not in use. Location is shared with the parent or assigned guardian in the same family for safety features.'**
   String get permissionOnboardingBackgroundLocationSubtitle;
 
   /// No description provided for @permissionOnboardingBackgroundLocationPrimaryButton.
@@ -4422,7 +4422,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionOnboardingBatterySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'So the app is not stopped while running in the background.'**
+  /// **'Allows tracking and safety alerts to keep working when Android would otherwise stop the app in the background.'**
   String get permissionOnboardingBatterySubtitle;
 
   /// No description provided for @permissionOnboardingBatteryPrimaryButton.
@@ -4518,7 +4518,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionOnboardingUsageSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'To manage app usage time on Android.'**
+  /// **'Used to measure which apps the child uses and for how long on Android, then show that usage to the parent or assigned guardian for screen-time management.'**
   String get permissionOnboardingUsageSubtitle;
 
   /// No description provided for @permissionOnboardingUsagePrimaryButton.
