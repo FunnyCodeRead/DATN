@@ -10,7 +10,6 @@ class AuthRuntimeManager {
   static StreamSubscription<User?>? _sub;
 
   static _RuntimeState _state = _RuntimeState.stopped;
-  static String? _currentUid;
 
   static int _opToken = 0;
   static String? _lastAuthUid;
@@ -22,7 +21,7 @@ class AuthRuntimeManager {
     _parentId = parentId;
     _displayName = displayName;
 
-    _sub?.cancel();
+    unawaited(_sub?.cancel());
 
     final initialUser = FirebaseAuth.instance.currentUser;
     User? lastUser = initialUser;
@@ -36,7 +35,7 @@ class AuthRuntimeManager {
       if (sameUser) return;
 
       lastUser = user;
-      _handleAuthChanged(user);
+      unawaited(_handleAuthChanged(user));
     });
   }
 
@@ -68,7 +67,6 @@ class AuthRuntimeManager {
     if (_state == _RuntimeState.starting) return;
 
     _state = _RuntimeState.starting;
-    _currentUid = uid;
 
     debugPrint('Runtime starting for $uid');
 
@@ -121,14 +119,13 @@ class AuthRuntimeManager {
     if (token != _opToken) return;
 
     _parentId = null;
-    _currentUid = null;
     _state = _RuntimeState.stopped;
 
     debugPrint('Runtime stopped');
   }
 
   static Future<void> dispose() async {
-    _sub?.cancel();
+    await _sub?.cancel();
     _sub = null;
 
     _opToken++;

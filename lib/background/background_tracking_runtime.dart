@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -68,7 +66,6 @@ class BackgroundTrackingRuntime {
   String? _activeSharingUid;
   Activity? _lastActivity;
   LocationData? _currentLocation;
-  MotionState _motionState = MotionState.moving;
   TransportMode _transport = TransportMode.unknown;
 
   int _lastStatusHeartbeatAtMs = 0;
@@ -117,7 +114,6 @@ class BackgroundTrackingRuntime {
 
       _activeSharingUid = sharingUid;
       _running = true;
-      _motionState = MotionState.moving;
       _transport = TransportMode.unknown;
       _currentLocation = null;
       _lastTrackingStatus = null;
@@ -170,7 +166,6 @@ class BackgroundTrackingRuntime {
               }
 
               _currentLocation = filtered;
-              _motionState = result.motion;
               _transport = result.transport;
 
               if (!_currentOnly) {
@@ -179,7 +174,9 @@ class BackgroundTrackingRuntime {
                     await _zoneMonitor?.onLocation(filtered);
                   }
                 } catch (e) {
-                  debugPrint('BackgroundTrackingRuntime zone monitor error: $e');
+                  debugPrint(
+                    'BackgroundTrackingRuntime zone monitor error: $e',
+                  );
                 }
               }
 
@@ -437,6 +434,7 @@ class BackgroundTrackingRuntime {
     String? message,
     bool force = false,
   }) async {
+    if (_currentOnly) return;
     if (!force && _lastTrackingStatus == status) return;
     _lastTrackingStatus = status;
 
@@ -569,11 +567,6 @@ class BackgroundTrackingRuntime {
         'headless FlutterEngine because no Activity is attached.',
       );
     }
-  }
-
-  AppLocalizations _fallbackL10n() {
-    final lang = PlatformDispatcher.instance.locale.languageCode.toLowerCase();
-    return lookupAppLocalizations(Locale(lang == 'en' ? 'en' : 'vi'));
   }
 
   Future<AppLocalizations> _getL10n() {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kid_manager/background/auth_runtime_manager.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/core/responsive.dart';
 import 'package:kid_manager/core/validators.dart';
 import 'package:kid_manager/helpers/json_helper.dart';
@@ -78,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final storage = context.read<StorageService>();
     final authVM = context.read<AuthVM>();
     final userVM = context.read<UserVm>();
-    final appVM = context.read<AppManagementVM>();
 
     // Validate
     if (email.isEmpty || password.isEmpty) {
@@ -158,8 +158,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
         AuthRuntimeManager.start(parentId: parentId, displayName: profile.name);
 
-        await appVM.loadAndSeedApp();
-        if (!mounted) return;
+        if (DemoFeatureFlags.appUsageEnabled) {
+          final appVM = context.read<AppManagementVM>();
+          await appVM.loadAndSeedApp();
+          if (!mounted) return;
+        }
       } else {
         unawaited(AuthRuntimeManager.stop());
       }

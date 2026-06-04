@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:kid_manager/background/auth_runtime_manager.dart';
 import 'package:kid_manager/background/tracking_background_service.dart';
 import 'package:kid_manager/background/tracking_runtime_store.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/core/storage_keys.dart';
 import 'package:kid_manager/features/permissions/permission_onboarding_flow.dart';
 import 'package:kid_manager/features/sessionguard/session_guard_state.dart';
@@ -61,7 +62,6 @@ class _StartupGateState extends State<StartupGate> {
 
   Future<void> _init() async {
     final storage = context.read<StorageService>();
-    final appVM = context.read<AppManagementVM>();
 
     final hasSeenFlash = storage.getBool(StorageKeys.flashSeenV1) ?? false;
 
@@ -77,7 +77,8 @@ class _StartupGateState extends State<StartupGate> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted || !DemoFeatureFlags.appUsageEnabled) return;
+      final appVM = context.read<AppManagementVM>();
       unawaited(appVM.loadAndSeedApp());
     });
 
@@ -199,7 +200,6 @@ class _SessionGuardState extends State<SessionGuard>
         final isGuardian = resolvedSession.isGuardian;
         final isLocationViewer = resolvedSession.isLocationViewer;
         final familyId = resolvedSession.familyId;
-        final parentUid = resolvedSession.parentUid;
         final prevStatus = _lastStatus;
         final prevUid = _lastUid;
 
@@ -386,7 +386,9 @@ class _SessionGuardState extends State<SessionGuard>
       }
       final userVm = context.read<UserVm>();
       final storage = context.read<StorageService>();
-      final appManagementVm = context.read<AppManagementVM>();
+      final appManagementVm = DemoFeatureFlags.appUsageEnabled
+          ? context.read<AppManagementVM>()
+          : null;
       final notificationVm = context.read<NotificationVM>();
 
       final loadedProfile = await userVm.loadProfile(
@@ -532,8 +534,10 @@ class _SessionGuardState extends State<SessionGuard>
 
       userVm.watchMe(uid);
 
-      if (resolvedRole == UserRole.parent && managedOwnerUid.isNotEmpty) {
-        unawaited(appManagementVm.watchChildren(managedOwnerUid));
+      if (DemoFeatureFlags.appUsageEnabled &&
+          resolvedRole == UserRole.parent &&
+          managedOwnerUid.isNotEmpty) {
+        unawaited(appManagementVm!.watchChildren(managedOwnerUid));
       }
 
       _bootstrappedUid = uid;

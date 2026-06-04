@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/core/storage_keys.dart';
 import 'package:kid_manager/features/sessionguard/session_guard.dart';
 import 'package:kid_manager/l10n/app_localizations.dart';
@@ -76,13 +77,15 @@ class _FlashScreenState extends State<FlashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appVM = context.watch<AppManagementVM>();
+    final isAppLoading = DemoFeatureFlags.appUsageEnabled
+        ? context.watch<AppManagementVM>().loading
+        : false;
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    if (appVM.loading) {
+    if (isAppLoading) {
       return const LoadingOverlay();
     }
 

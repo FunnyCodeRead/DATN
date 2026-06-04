@@ -27,6 +27,7 @@
     "zoneEventsByChild": {
       "$childUid": {
         ".read": "auth != null && (auth.uid === $childUid || (root.child('users').child($childUid).child('allowTracking').val() === true && root.child('users').child($childUid).child('parentUid').val() === auth.uid) || (root.child('users').child($childUid).child('allowTracking').val() === true && root.child('users').child(auth.uid).child('role').val() === 'guardian' && root.child('users').child(auth.uid).child('parentUid').val() === root.child('users').child($childUid).child('parentUid').val() && root.child('users').child(auth.uid).child('familyId').val() === root.child('users').child($childUid).child('familyId').val() && root.child('users').child(auth.uid).child('managedChildIdsMap').child($childUid).val() === true))",
+        ".indexOn": ["timestamp"],
         ".write": false
       }
     },

@@ -98,11 +98,9 @@ class _PermissionOnboardingFlowState extends State<PermissionOnboardingFlow>
     if (Platform.isAndroid) {
       if (DemoFeatureFlags.appUsageEnabled) {
         steps.add(PermissionOnboardingStepType.usage);
+        steps.add(PermissionOnboardingStepType.accessibility);
       }
-      steps.addAll(const [
-        PermissionOnboardingStepType.battery,
-        PermissionOnboardingStepType.accessibility,
-      ]);
+      steps.add(PermissionOnboardingStepType.battery);
     }
 
     return steps;

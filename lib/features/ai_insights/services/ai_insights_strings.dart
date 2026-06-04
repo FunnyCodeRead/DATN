@@ -46,6 +46,71 @@ class AiInsightsStrings {
 
   String get openInsightsTooltip => isVietnamese ? 'AI hỗ trợ' : 'AI insights';
 
+  String get assistantEyebrow => isVietnamese ? 'AI hỗ trợ' : 'AI assistant';
+
+  String get assistantSubtitle => isVietnamese
+      ? 'Tổng hợp vị trí, cảnh báo và vùng an toàn trong ngày.'
+      : 'Summarizes location, alerts, and safe-zone activity for the day.';
+
+  String get changeDayLabel => isVietnamese ? 'Đổi ngày' : 'Change day';
+
+  String get selectedDayLabel =>
+      isVietnamese ? 'Ngày đang xem' : 'Selected day';
+
+  String get keyMetricsTitle => isVietnamese ? 'Chỉ số nhanh' : 'Key signals';
+
+  String get insightHighlightsTitle =>
+      isVietnamese ? 'Điểm cần chú ý' : 'Signals to review';
+
+  String get askAiDescription => isVietnamese
+      ? 'Nhập câu hỏi hoặc chọn gợi ý để lọc nhanh dòng sự kiện.'
+      : 'Ask a question or pick a prompt to filter the timeline.';
+
+  String get quickQuestionsLabel =>
+      isVietnamese ? 'Câu hỏi gợi ý' : 'Suggested questions';
+
+  String get activityWindowLabel =>
+      isVietnamese ? 'Khoảng ghi nhận' : 'Activity window';
+
+  String get noTimeLabel => '--:--';
+
+  String get distanceMetricLabel => isVietnamese ? 'Quãng đường' : 'Distance';
+
+  String get tripsMetricLabel => isVietnamese ? 'Chặng' : 'Trips';
+
+  String get stopsMetricLabel => isVietnamese ? 'Điểm dừng' : 'Stops';
+
+  String get alertsMetricLabel => isVietnamese ? 'Cảnh báo' : 'Alerts';
+
+  String get zonesMetricLabel => isVietnamese ? 'Sự kiện zone' : 'Zone events';
+
+  String get routesMetricLabel => isVietnamese ? 'Safe Route' : 'Safe Route';
+
+  String get pointsMetricLabel => isVietnamese ? 'Điểm dữ liệu' : 'Data points';
+
+  String get loadingTitle =>
+      isVietnamese ? 'AI đang tổng hợp dữ liệu' : 'AI is building the summary';
+
+  String get loadingSubtitle => isVietnamese
+      ? 'Đang đọc lịch sử vị trí, cảnh báo và zone trong ngày.'
+      : 'Reading location history, alerts, and zone events for the day.';
+
+  String get errorTitle =>
+      isVietnamese ? 'Không thể tạo phân tích' : 'Unable to build insights';
+
+  String get emptyTimelineTitle =>
+      isVietnamese ? 'Chưa có sự kiện nổi bật' : 'No notable events yet';
+
+  String timelineCountLabel(int count) {
+    if (isVietnamese) return '$count sự kiện';
+    return count == 1 ? '1 event' : '$count events';
+  }
+
+  String matchedTermsLabel(int count) {
+    if (isVietnamese) return '$count từ khớp';
+    return count == 1 ? '1 matched term' : '$count matched terms';
+  }
+
   List<String> get suggestedQueries => isVietnamese
       ? const <String>['SOS hôm nay', 'Ra khỏi zone', 'Safe route', '7h sáng']
       : const <String>['SOS today', 'Left zone', 'Safe route', '7 AM'];

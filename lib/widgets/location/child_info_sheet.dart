@@ -87,14 +87,6 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
   }
 
   // ✅ Hàm lấy icon theo % pin
-  IconData _getBatteryIcon(int batteryLevel) {
-    if (batteryLevel > 80) return Icons.battery_full;
-    if (batteryLevel > 60) return Icons.battery_6_bar;
-    if (batteryLevel > 40) return Icons.battery_4_bar;
-    if (batteryLevel > 20) return Icons.battery_2_bar;
-    return Icons.battery_1_bar;
-  }
-
   // ✅ Hàm lấy màu shadow
   Color _getBatteryShadowColor(int batteryLevel) {
     if (batteryLevel > 50) return const Color(0xFF16A34A);
@@ -464,7 +456,7 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
                                         BoxShadow(
                                           color: _getBatteryShadowColor(
                                             batteryLevel,
-                                          ).withOpacity(0.25),
+                                          ).withValues(alpha: 0.25),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -551,16 +543,17 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
                                                             gradient: LinearGradient(
                                                               colors: [
                                                                 Colors.white
-                                                                    .withOpacity(
-                                                                      0,
+                                                                    .withValues(
+                                                                      alpha: 0,
                                                                     ),
                                                                 Colors.white
-                                                                    .withOpacity(
-                                                                      0.3,
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.3,
                                                                     ),
                                                                 Colors.white
-                                                                    .withOpacity(
-                                                                      0,
+                                                                    .withValues(
+                                                                      alpha: 0,
                                                                     ),
                                                               ],
                                                             ),
@@ -569,8 +562,9 @@ class _ChildInfoSheetState extends State<ChildInfoSheet> {
                                                       );
                                                     },
                                                     onEnd: () {
-                                                      if (mounted)
+                                                      if (mounted) {
                                                         setState(() {});
+                                                      }
                                                     },
                                                   ),
                                                 ),

@@ -66,14 +66,14 @@ class MyApp extends StatefulWidget {
 
   const MyApp({super.key, required this.isDark, required this.primaryColor});
 
-  static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
+  static MyAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<MyAppState>()!;
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MyApp> createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   late final SosViewModel _sosVm;
   late final StorageService _storageService;
   late final FirebaseAuthService _authService;

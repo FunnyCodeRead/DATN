@@ -2,8 +2,5 @@
 <resources>
 
     <string name="app_name">Kid Manager</string>
-    <string name="accessibility_service_desc">
-        Kid Manager accessibility service
-    </string>
 
 </resources>

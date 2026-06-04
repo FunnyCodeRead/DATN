@@ -1,6 +1,5 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kid_manager/features/ai_insights/models/ai_insight_models.dart';
 import 'package:kid_manager/features/safe_route/data/datasources/safe_route_remote_data_source.dart';
@@ -13,19 +12,16 @@ class AiInsightsDataSource {
   AiInsightsDataSource({
     required ParentLocationVm parentLocationVm,
     FirebaseFirestore? firestore,
-    FirebaseDatabase? database,
     FirebaseAuth? auth,
     SafeRouteRemoteDataSource? safeRouteRemoteDataSource,
   }) : _parentLocationVm = parentLocationVm,
        _firestore = firestore ?? FirebaseFirestore.instance,
-       _database = database ?? FirebaseDatabase.instance,
        _auth = auth ?? FirebaseAuth.instance,
        _safeRouteRemoteDataSource =
            safeRouteRemoteDataSource ?? FirebaseSafeRouteRemoteDataSource();
 
   final ParentLocationVm _parentLocationVm;
   final FirebaseFirestore _firestore;
-  final FirebaseDatabase _database;
   final FirebaseAuth _auth;
   final SafeRouteRemoteDataSource _safeRouteRemoteDataSource;
 
@@ -77,35 +73,43 @@ class AiInsightsDataSource {
     required DateTime dayStart,
     required DateTime dayEnd,
   }) async {
+    final viewerUid = _auth.currentUser?.uid;
+    if (viewerUid == null || viewerUid.isEmpty) {
+      return const <AiZoneEventRecord>[];
+    }
+
     try {
-      final snapshot = await _database
-          .ref('zoneEventsByChild/$childId')
-          .orderByChild('timestamp')
-          .startAt(dayStart.millisecondsSinceEpoch)
-          .endAt(dayEnd.millisecondsSinceEpoch - 1)
+      final snapshot = await _firestore
+          .collection('notifications')
+          .where('receiverId', isEqualTo: viewerUid)
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart),
+          )
+          .where('createdAt', isLessThan: Timestamp.fromDate(dayEnd))
+          .orderBy('createdAt', descending: true)
+          .limit(200)
           .get();
-      if (snapshot.value is! Map) {
-        return const <AiZoneEventRecord>[];
+
+      final events = <AiZoneEventRecord>[];
+      for (final doc in snapshot.docs) {
+        final item = AppNotification.fromMap(
+          doc.id,
+          doc.data(),
+          store: NotificationStore.global,
+        );
+        if (item.notificationType != NotificationType.zone) continue;
+        if (!_matchesChild(item, childId)) continue;
+
+        final event = _zoneEventFromNotification(item);
+        if (event == null) continue;
+        if (event.timestamp < dayStart.millisecondsSinceEpoch ||
+            event.timestamp >= dayEnd.millisecondsSinceEpoch) {
+          continue;
+        }
+        events.add(event);
       }
 
-      final rawMap = Map<dynamic, dynamic>.from(snapshot.value as Map);
-      final events = <AiZoneEventRecord>[];
-      rawMap.forEach((key, value) {
-        if (value is! Map) return;
-        final map = Map<String, dynamic>.from(value);
-        events.add(
-          AiZoneEventRecord(
-            id: key.toString(),
-            zoneId: (map['zoneId'] ?? '').toString(),
-            zoneName: (map['zoneName'] ?? '').toString(),
-            zoneType: (map['zoneType'] ?? 'safe').toString(),
-            action: (map['action'] ?? '').toString(),
-            timestamp: int.tryParse((map['timestamp'] ?? '').toString()) ?? 0,
-            durationMinutes:
-                int.tryParse((map['durationMin'] ?? '').toString()) ?? 0,
-          ),
-        );
-      });
       events.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return events;
     } catch (error, stackTrace) {
@@ -113,6 +117,35 @@ class AiInsightsDataSource {
       debugPrint('$stackTrace');
       return const <AiZoneEventRecord>[];
     }
+  }
+
+  AiZoneEventRecord? _zoneEventFromNotification(AppNotification item) {
+    final data = item.data;
+    final timestamp = int.tryParse((data['timestamp'] ?? '').toString()) ?? 0;
+    if (timestamp <= 0) return null;
+
+    final action = (data['action'] ?? '').toString().trim().toLowerCase();
+    if (action != 'enter' && action != 'exit') return null;
+
+    final zoneName = (data['zoneName'] ?? item.body).toString().trim();
+    if (zoneName.isEmpty) return null;
+
+    final zoneType = (data['zoneType'] ?? 'safe')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final durationMinutes =
+        int.tryParse((data['durationMin'] ?? '').toString()) ?? 0;
+
+    return AiZoneEventRecord(
+      id: (data['eventId'] ?? item.id).toString(),
+      zoneId: (data['zoneId'] ?? '').toString(),
+      zoneName: zoneName,
+      zoneType: zoneType == 'danger' ? 'danger' : 'safe',
+      action: action,
+      timestamp: timestamp,
+      durationMinutes: durationMinutes,
+    );
   }
 
   Future<List<AppNotification>> _loadAlerts({
@@ -197,7 +230,9 @@ class AiInsightsDataSource {
           .cast<Trip>()
           .toList(growable: false);
     } catch (error, stackTrace) {
-      debugPrint('[AiInsightsDataSource] safe route history load failed: $error');
+      debugPrint(
+        '[AiInsightsDataSource] safe route history load failed: $error',
+      );
       debugPrint('$stackTrace');
       return const <Trip>[];
     }
@@ -223,4 +258,3 @@ class AiInsightsDataSource {
     return started.isBefore(dayStart) && updated.isAfter(dayStart);
   }
 }
-

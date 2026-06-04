@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show PlatformDispatcher;
 
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kid_manager/core/app_navigator.dart';
 import 'package:kid_manager/core/app_route_observer.dart';
+import 'package:kid_manager/core/demo_feature_flags.dart';
 import 'package:kid_manager/l10n/app_localizations.dart';
 import 'package:kid_manager/models/notifications/app_notification.dart';
 import 'package:kid_manager/models/notifications/notification_payload.dart';
@@ -108,6 +110,10 @@ class NotificationService {
     // );
 
     if (type == 'test') return;
+    if (_isDisabledNotificationType(type)) {
+      debugPrint('🔕 skip tap for disabled notification type=$type');
+      return;
+    }
 
     if (type == 'sos') {
       await SosTapRouter.handleTap(data);
@@ -125,11 +131,13 @@ class NotificationService {
     if (type == 'family_chat' || route == 'family_group_chat') {
       if (familyId == null || familyId.isEmpty) return;
 
-      navigator.push(
-        MaterialPageRoute(
-          builder: (_) => FamilyGroupChatScreen(
-            initialFamilyId: familyId,
-            initialMessageId: messageId,
+      unawaited(
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => FamilyGroupChatScreen(
+              initialFamilyId: familyId,
+              initialMessageId: messageId,
+            ),
           ),
         ),
       );
@@ -154,6 +162,12 @@ class NotificationService {
     final item = await _repo.getItemById(notificationId);
     if (item == null) {
       // debugPrint('🔔 notification not found: $notificationId');
+      return;
+    }
+    if (!DemoFeatureFlags.isNotificationVisible(item.notificationType)) {
+      debugPrint(
+        '🔕 skip navigation for hidden notification type=${item.notificationType.value}',
+      );
       return;
     }
 
@@ -197,6 +211,10 @@ class NotificationService {
   ) async {
     final data = message.data;
     final type = data['type']?.toString().toLowerCase() ?? '';
+    if (_isDisabledNotificationType(type)) {
+      debugPrint('🔕 [$type] skip: feature disabled');
+      return;
+    }
 
     // Guard riêng cho schedule + memory_day
     if (type == 'schedule' ||
@@ -413,6 +431,24 @@ class NotificationService {
       body: body,
       payload: jsonEncode(message.data),
     );
+  }
+
+  static bool _isDisabledNotificationType(String type) {
+    if (!DemoFeatureFlags.scheduleEnabled &&
+        (type == 'schedule' ||
+            type == 'importexcel' ||
+            type == 'schedule_import')) {
+      return true;
+    }
+
+    if (!DemoFeatureFlags.appUsageEnabled &&
+        (type == 'appremoved' ||
+            type == 'blockedapp' ||
+            type == 'usagelimitexceeded')) {
+      return true;
+    }
+
+    return false;
   }
 
   static String _normalizeTrackingKey(String rawKey) {

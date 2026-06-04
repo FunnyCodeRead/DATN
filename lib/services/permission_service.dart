@@ -127,6 +127,7 @@ class PermissionService {
   }
 
   Future<bool> hasUsagePermission() async {
+    if (!DemoFeatureFlags.appUsageEnabled) return true;
     if (!Platform.isAndroid) return true;
 
     try {
@@ -147,6 +148,7 @@ class PermissionService {
   }
 
   Future<bool> hasAccessibilityPermission() async {
+    if (!DemoFeatureFlags.appUsageEnabled) return true;
     if (!Platform.isAndroid) return true;
 
     try {
